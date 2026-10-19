@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+.tmp-purple-mcp-*
+
+# Local scratch and internal material — never commit
+outputs/
+connectors/*/research/
+*.local.md
+
+# Claude Code agent worktrees
+.claude/worktrees/

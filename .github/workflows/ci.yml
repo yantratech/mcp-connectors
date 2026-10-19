@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Scan the tracked snapshot and public history
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_dir="$(mktemp -d "$RUNNER_TEMP/gitleaks.XXXXXX")"
+          trap 'rm -rf -- "$tool_dir"' EXIT
+
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            -o "$tool_dir/gitleaks.tar.gz"
+          printf '%s  %s\n' "$GITLEAKS_SHA256" "$tool_dir/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf "$tool_dir/gitleaks.tar.gz" -C "$tool_dir" gitleaks
+
+          mkdir "$tool_dir/snapshot"
+          git archive HEAD | tar -xf - -C "$tool_dir/snapshot"
+          "$tool_dir/gitleaks" dir "$tool_dir/snapshot" --redact --no-banner
+          "$tool_dir/gitleaks" git . --log-opts="--all" --redact --no-banner
