@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.log
+.eslintcache
+__pycache__/
+
+# Local credentials (.env.example is the tracked template)
+.env
+.env.*
+!.env.example

@@ -1,0 +1,66 @@
+{
+  "name": "@yantratech/revolut-mcp-server",
+  "version": "0.1.0",
+  "description": "Revolut Business MCP server — read access to accounts, transactions, and counterparties, plus payment-DRAFT creation (never moves money)",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yantratech/mcp-connectors.git",
+    "directory": "connectors/revolut"
+  },
+  "author": "Yantra Applied Technologies Limited (https://yantratech.com)",
+  "type": "module",
+  "bin": {
+    "revolut-mcp-server": "dist/index.js",
+    "revolut-mcp-authorize": "dist/bin/authorize.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"const fs=require('node:fs');for(const f of ['dist/index.js','dist/bin/authorize.js'])fs.chmodSync(f,0o755)\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "lint:fix": "eslint --fix",
+    "lint": "eslint .",
+    "test": "node --test test/*.test.mjs",
+    "smoke:read": "node test/live-read-smoke.mjs",
+    "authorize": "node dist/bin/authorize.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.13.10",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.68.0"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "revolut",
+    "revolut-business",
+    "banking",
+    "payments",
+    "claude"
+  ],
+  "bugs": "https://github.com/yantratech/mcp-connectors/issues",
+  "homepage": "https://github.com/yantratech/mcp-connectors/tree/main/connectors/revolut#readme"
+}

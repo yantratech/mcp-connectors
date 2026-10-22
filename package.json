@@ -1,0 +1,15 @@
+{
+  "name": "@yantratech/mcp-connectors",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Yantra MCP connectors monorepo — Drata, Iru Endpoint (formerly Kandji), Revolut Business, Xero and Yantra Spend MCP servers",
+  "workspaces": [
+    "connectors/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  }
+}

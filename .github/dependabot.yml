@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # npm workspaces: one config at the root covers all connectors/* packages.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      dev-tooling:
+        dependency-type: development
+        # Major bumps (TypeScript, ESLint, ...) open as PRs of their own, so
+        # one breaking upgrade cannot hold back the group's minor and patch
+        # updates.
+        update-types: ["minor", "patch"]
+      mcp-sdk:
+        patterns:
+          - "@modelcontextprotocol/*"
+    ignore:
+      # @types/node should match the oldest supported Node (engines: >=22);
+      # a major bump would let APIs from newer Node versions type-check.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
