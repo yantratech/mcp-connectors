@@ -3,9 +3,8 @@ dist/
 .env
 .DS_Store
 *.log
-.tmp-purple-mcp-*
 
-# Local scratch and internal material — never commit
+# Local scratch — never commit
 outputs/
 connectors/*/research/
 *.local.md

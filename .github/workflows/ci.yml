@@ -1,15 +1,73 @@
 name: CI
 
+# Deliberately no path filters: every PR runs the full matrix so a green
+# check always means "the whole repo builds, tests, and lints".
 on:
   push:
     branches: [main]
   pull_request:
 
+concurrency:
+  # Only PR runs are superseded. A push to main gets a group of its own (keyed
+  # on the commit SHA), so it is neither cancelled in progress nor dropped while
+  # pending behind a newer push: GitHub cancels a *pending* run whenever a newer
+  # one joins the same group, whatever cancel-in-progress says. Every commit on
+  # main therefore keeps its own build, test, lint and secret-scan result.
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
 jobs:
+  test:
+    name: build · test · lint (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build every workspace
+        run: npm run build --workspaces
+
+      - name: Test every workspace (offline suites only)
+        run: npm test --workspaces --if-present
+
+      - name: Lint every workspace
+        run: npm run lint --workspaces
+
+      # npm never adds the root LICENSE to a workspace tarball, and a version
+      # published without one cannot be fixed afterwards. Check what each
+      # non-private package would actually ship: LICENSE, README.md, dist/ and
+      # every bin target. --ignore-scripts because dist/ is already built above.
+      - name: Check npm tarball contents
+        run: |
+          set -euo pipefail
+          pack_json="$(mktemp "$RUNNER_TEMP/pack.XXXXXX")"
+          npm pack --dry-run --json --workspaces --ignore-scripts > "$pack_json"
+          node .github/scripts/check-pack-contents.mjs "$pack_json"
+
   secret-scan:
+    # The required check. Runs the gitleaks CLI directly (the gitleaks-action
+    # wrapper requires a commercial license for organization repos; the CLI
+    # itself is MIT), pinned by version and checksum. It scans the tracked
+    # snapshot exactly as `git archive` exports it, then every commit on every
+    # fetched ref. There is no .gitleaksignore: a synthetic fixture that trips a
+    # rule carries an inline `gitleaks:allow` comment, so the allowlist travels
+    # with the code.
     name: gitleaks
     runs-on: ubuntu-latest
     steps:

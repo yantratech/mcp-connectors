@@ -1,0 +1,18 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Env / secrets — never commit credentials or the token store
+.env
+.env.local
+*.pem
+*.cer
+tokens-*.json
+
+# Logs
+*.log
+
+# macOS
+.DS_Store

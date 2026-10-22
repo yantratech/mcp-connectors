@@ -1,0 +1,64 @@
+{
+  "name": "@yantratech/xero-mcp-server",
+  "version": "1.0.0",
+  "description": "Unofficial, extended fork of XeroAPI/xero-mcp-server covering accounting, payroll (NZ/UK), fixed assets, projects and files: 148 tools by default; 153 with XERO_ENABLE_RECEIPTS=1 and XERO_ENABLE_JOURNALS=1",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yantratech/mcp-connectors.git",
+    "directory": "connectors/xero"
+  },
+  "author": "Yantra Applied Technologies Limited (https://yantratech.com)",
+  "type": "module",
+  "bin": {
+    "xero-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"const fs=require('node:fs');for(const f of fs.readdirSync('dist'))if(f.endsWith('.js'))fs.chmodSync('dist/'+f,0o755)\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "lint:fix": "eslint --fix",
+    "lint": "eslint .",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "axios": "^1.20.0",
+    "dotenv": "^18.0.5",
+    "xero-node": "^20.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.13.10",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.68.0"
+  },
+  "bugs": "https://github.com/yantratech/mcp-connectors/issues",
+  "homepage": "https://github.com/yantratech/mcp-connectors/tree/main/connectors/xero#readme",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "xero",
+    "accounting",
+    "invoices",
+    "payroll",
+    "claude"
+  ]
+}

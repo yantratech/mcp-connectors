@@ -1,0 +1,68 @@
+{
+  "name": "@yantratech/yantra-spend-mcp-server",
+  "version": "0.1.0",
+  "description": "Yantra Spend MCP server — façade for engineering, AI, and infrastructure spend across AWS, Azure, Anthropic, OpenAI and Cursor (GCP not supported).",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yantratech/mcp-connectors.git",
+    "directory": "connectors/yantra-spend"
+  },
+  "author": "Yantra Applied Technologies Limited (https://yantratech.com)",
+  "type": "module",
+  "bin": {
+    "yantra-spend-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"const fs=require('node:fs');for(const f of fs.readdirSync('dist'))if(f.endsWith('.js'))fs.chmodSync('dist/'+f,0o755)\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cost-explorer": "^3.1146.0",
+    "@azure/arm-costmanagement": "^1.0.0",
+    "@azure/identity": "^4.13.3",
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "dotenv": "^18.0.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.13.10",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.68.0"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "finops",
+    "cloud-spend",
+    "aws",
+    "azure",
+    "anthropic",
+    "openai",
+    "claude"
+  ],
+  "bugs": "https://github.com/yantratech/mcp-connectors/issues",
+  "homepage": "https://github.com/yantratech/mcp-connectors/tree/main/connectors/yantra-spend#readme"
+}
