@@ -37,7 +37,7 @@
     "test:live:create-blueprint": "node test/live-create-blueprint.test.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {

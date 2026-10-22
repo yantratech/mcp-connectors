@@ -37,7 +37,7 @@
     "authorize": "node dist/bin/authorize.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "jsonwebtoken": "^9.0.2",
     "zod": "^4.6.5"
   },
