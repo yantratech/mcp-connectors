@@ -26,6 +26,7 @@ const { CursorSource } = await import("../dist/sources/cursor.source.js");
 
 // ── shared cred-stripping helpers ─────────────────────────────────────────
 const SOURCE_ENV_KEYS = [
+  "AWS_PROFILE",
   "AWS_ACCESS_KEY_ID",
   "AWS_SECRET_ACCESS_KEY",
   "AZURE_TENANT_ID",
@@ -67,6 +68,50 @@ describe("AwsSource", () => {
     assert.deepEqual(await source.getCostLines(START, END), []);
     assert.deepEqual(await source.getAnomalies(7), []);
     assert.equal(await source.getForecastToMonthEnd(), null);
+  });
+
+  it("queries costs, anomalies, forecasts and health with a named AWS profile", async () => {
+    process.env.AWS_PROFILE = "spend-readonly";
+    const calls = [];
+    const source = new AwsSource(() => ({
+      send: async (command) => {
+        calls.push(command.constructor.name);
+        return {
+          ResultsByTime: [{ Total: { UnblendedCost: { Amount: "12.5" } } }],
+          Anomalies: [
+            { DimensionValue: "Example service", Impact: { TotalImpact: 2 } },
+          ],
+          Total: { Amount: "25" },
+        };
+      },
+    }));
+
+    assert.equal(source.isAvailable(), true);
+    assert.equal((await source.getCostLines(START, END))[0].amount_usd, 12.5);
+    assert.equal((await source.getAnomalies(7))[0].impact_usd, 2);
+    assert.equal((await source.getForecastToMonthEnd()).amount_usd, 25);
+    assert.deepEqual(await source.probe(), { reachable: true });
+    assert.deepEqual(calls, [
+      "GetCostAndUsageCommand",
+      "GetAnomaliesCommand",
+      "GetCostForecastCommand",
+      "GetCostAndUsageCommand",
+    ]);
+  });
+
+  it("reports profile credential failure instead of silently skipping AWS", async () => {
+    process.env.AWS_PROFILE = "expired-session";
+    const source = new AwsSource(() => ({
+      send: async () => {
+        throw new Error("SSO session expired; log in again");
+      },
+    }));
+
+    await assert.rejects(source.getCostLines(START, END), /SSO session expired/);
+    assert.deepEqual(await source.probe(), {
+      reachable: false,
+      error: "SSO session expired; log in again",
+    });
   });
 
   it("flattens per-day groups into CostLine[], following NextPageToken pagination", async () => {

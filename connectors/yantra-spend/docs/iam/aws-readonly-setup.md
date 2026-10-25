@@ -1,8 +1,6 @@
 # AWS Cost Explorer — read-only setup
 
-`yantra-spend` uses the AWS Cost Explorer API for `aws.source`. The policy in
-[`aws-readonly-policy.json`](./aws-readonly-policy.json) grants exactly the
-three Cost Explorer read actions the connector calls, and nothing else:
+`yantra-spend` uses three Cost Explorer read actions. The policy in [aws-readonly-policy.json](./aws-readonly-policy.json) covers this adapter; it grants no Budgets access.
 
 | IAM action | Used by |
 |---|---|
@@ -10,55 +8,28 @@ three Cost Explorer read actions the connector calls, and nothing else:
 | `ce:GetCostForecast` | `forecast_month_end` |
 | `ce:GetAnomalies` | `anomalies` |
 
-Cost Explorer is a single-region service hosted in `us-east-1` even when your
-workloads run elsewhere. The connector passes `AWS_REGION` (default
-`us-east-1`) to the AWS SDK, which sends Cost Explorer calls to the
-`us-east-1` endpoint from any commercial region, so an existing `AWS_REGION`
-setting does not need to change. CE charges per request — at time of writing, the
-public price is **$0.01 per request** for the standard `Get*` calls. Each AWS
-query is one request, plus one more for each extra page when Cost Explorer
-paginates a large result. `spend_summary` and `top_movers` query both the
-requested window and the equal-length prior window, so they typically make two
-requests; the other tools make one.
+Cost Explorer uses the `us-east-1` endpoint. Leave `AWS_REGION` unset or set it to `us-east-1`. Cost Explorer requests can incur charges, including pagination and comparisons with prior periods.
 
-## Create a least-privilege IAM user
+## Use an IAM Identity Center or role profile
 
-Run these from the root of the repository checkout:
+Have the account administrator assign the read policy to the intended permission set or role. Configure a named profile using the standard AWS CLI configuration. For an IAM Identity Center profile:
 
-```bash
-aws iam create-user --user-name yantra-spend-readonly
-
-aws iam put-user-policy \
-  --user-name yantra-spend-readonly \
-  --policy-name YantraSpendReadOnly \
-  --policy-document file://connectors/yantra-spend/docs/iam/aws-readonly-policy.json
-
-aws iam create-access-key --user-name yantra-spend-readonly
+```fish
+aws configure sso --profile spend-readonly
+aws sso login --profile spend-readonly
+aws sts get-caller-identity --profile spend-readonly
 ```
 
-Plug the resulting `AccessKeyId` and `SecretAccessKey` into the connector's
-`.env` (or your MCP client's `env` block) as `AWS_ACCESS_KEY_ID` and
-`AWS_SECRET_ACCESS_KEY`. `AWS_REGION` can remain `us-east-1` (the default).
+Confirm that the returned account and role are the intended billing reader. Set `AWS_PROFILE=spend-readonly` in the MCP client's environment or the connector's `.env`. Remove static `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` entries from both locations when using a profile. The Node.js AWS SDK uses its normal credential chain and refreshes temporary role credentials where the configured provider supports it. The connector does not start an interactive sign-in; log in again when the SSO session expires, then retry the tool.
+
+An explicitly configured profile enables AWS even before credentials resolve. An invalid profile or expired session produces a tool error or a failed health probe, rather than silently omitting AWS. With neither a profile nor a complete environment access-key pair, AWS is unavailable and skipped.
+
+Existing environment-key configurations remain supported: provide `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, plus `AWS_SESSION_TOKEN` when using temporary credentials. Prefer the profile path for human-operated local sessions; do not create a long-lived key just to configure this connector.
 
 ## Multi-account organisations
 
-For Organisations / management-account roll-ups, attach the policy to a role
-(or user) in the management account and pass `group_by: "account"` to
-`spend_by_source`; the connector maps it to Cost Explorer's `LINKED_ACCOUNT`
-dimension and fans results out by member account.
+For management-account roll-ups, use a permission set or role in the management account and pass `group_by: "account"` to `spend_by_source`. The connector maps this to Cost Explorer's `LINKED_ACCOUNT` dimension.
 
-## Sanity check
+## Verify operation
 
-```bash
-# GNU date (Linux) first; the -v-7d form is the macOS/BSD fallback.
-SEVEN_DAYS_AGO=$(date -u -d '7 days ago' +%F 2>/dev/null || date -u -v-7d +%F)
-
-aws ce get-cost-and-usage \
-  --time-period Start="$SEVEN_DAYS_AGO",End="$(date -u +%F)" \
-  --granularity DAILY \
-  --metrics UnblendedCost \
-  --region us-east-1
-```
-
-If this returns `ResultsByTime`, the credentials work. The connector's
-`spend_by_source` tool with `source: "aws"` exercises the same call.
+After checking the profile identity, run the connector's `health` tool and `spend_by_source` with `source: "aws"` and a recent date range. Verify `forecast_month_end` and `anomalies` as well; a forecast requires sufficient Cost Explorer history. A successful identity check alone does not establish Cost Explorer permissions.
