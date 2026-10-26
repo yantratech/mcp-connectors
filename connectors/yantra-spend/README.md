@@ -107,6 +107,8 @@ claude mcp add yantra-spend --env ANTHROPIC_ADMIN_KEY=YOUR_ADMIN_KEY --env CURSO
 
 Pass any of the variables from `.env.example` via repeated `--env` flags (the full set is shown in the Claude Desktop block below). From a source checkout, replace `npx -y @yantratech/yantra-spend-mcp-server` with `node /path/to/mcp-connectors/connectors/yantra-spend/dist/index.js`; the `--env` flags can then be left out if `connectors/yantra-spend/.env` holds the credentials.
 
+For AWS, prefer `AWS_PROFILE=spend-readonly` with an existing IAM Identity Center or role profile. Sign in with `aws sso login --profile spend-readonly` before starting the connector, and renew the login when the SSO session expires. The AWS SDK resolves and refreshes temporary credentials; the connector does not perform interactive login. Remove static `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` entries from the client environment and connector `.env` when using a profile. An explicit access-key pair remains supported, with `AWS_SESSION_TOKEN` for temporary credentials. See [AWS setup](docs/iam/aws-readonly-setup.md).
+
 ### Claude Desktop configuration
 
 ```json
@@ -116,8 +118,7 @@ Pass any of the variables from `.env.example` via repeated `--env` flags (the fu
       "command": "npx",
       "args": ["-y", "@yantratech/yantra-spend-mcp-server"],
       "env": {
-        "AWS_ACCESS_KEY_ID": "…",
-        "AWS_SECRET_ACCESS_KEY": "…",
+        "AWS_PROFILE": "spend-readonly",
         "AZURE_TENANT_ID": "…",
         "AZURE_CLIENT_ID": "…",
         "AZURE_CLIENT_SECRET": "…",
